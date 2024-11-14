@@ -4,7 +4,7 @@ import { XMLParser, XMLBuilder } from 'fast-xml-parser'
 import fs from 'fs/promises'
 import path from 'path'
 
-const SITEMAP_DIR = '../tmp/generated_sitemaps';
+const SITEMAP_DIR = '/tmp/generated_sitemaps';
 
 export async function processSitemap(formData: FormData) {
   const sitemapUrl = formData.get('sitemapUrl') as string
