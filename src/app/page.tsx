@@ -17,8 +17,17 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Link from "next/link";
 
+interface Result {
+  success: boolean;
+  totalUrls?: number;
+  subsetSize?: number;
+  subsetUrls?: string[];
+  sitemapId?: string;
+  error?: string;
+}
+
 export default function SitemapSubsetGenerator() {
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<Result | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [inputMethod, setInputMethod] = useState("url");
 
@@ -108,18 +117,24 @@ export default function SitemapSubsetGenerator() {
                   <div className="max-h-60 overflow-y-auto">
                     <h3 className="font-semibold mb-2">Subset URLs:</h3>
                     <ul className="list-disc pl-5 space-y-1">
-                      {result.subsetUrls.map((url: string, index: number) => (
-                        <li key={index} className="text-sm">
-                          {url}
-                        </li>
-                      ))}
+                      {result.subsetUrls &&
+                        result.subsetUrls.map((url: string, index: number) => (
+                          <li key={index} className="text-sm">
+                            {url}
+                          </li>
+                        ))}
                     </ul>
                   </div>
-                  <Link href={`/sitemap/${result.sitemapId}`} passHref>
-                    <Button as="a" target="_blank" rel="noopener noreferrer">
+                  <Button>
+                    <Link
+                      href={`/sitemap/${result.sitemapId}`}
+                      passHref
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       Validate Your Sitemap Subset
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </>
               ) : (
                 <p className="text-red-500">{result.error}</p>

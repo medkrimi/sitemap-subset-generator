@@ -33,7 +33,15 @@ export async function processSitemap(formData: FormData) {
       throw new Error('Invalid sitemap format')
     }
 
-    const urls = result.urlset.url.map((url: any) => typeof url === 'string' ? url : url.loc)
+    const urls = result.urlset.url.map((url: unknown) => {
+      if (typeof url === 'string') {
+        return url
+      } else if (typeof url === 'object' && url !== null && 'loc' in url) {
+        return (url as { loc: string }).loc
+      } else {
+        throw new Error('Invalid URL format')
+      }
+    })
 
     // Group URLs by their structure
     const groupedUrls: { [key: string]: string[] } = {}
