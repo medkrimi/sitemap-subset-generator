@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs/promises'
 import path from 'path'
 
-const SITEMAP_DIR = path.join(process.cwd(), 'generated_sitemaps')
+const SITEMAP_DIR = '/tmp/generated_sitemaps'
 
 export async function GET(
     request: NextRequest,
