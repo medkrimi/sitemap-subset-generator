@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { processSitemap } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,27 +17,34 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import Link from "next/link";
+import { useFormState } from "react-dom";
+import { useFormStatus } from "react-dom";
 
-interface Result {
+interface SitemapResult {
   success: boolean;
   totalUrls?: number;
-  subsetSize?: number;
   subsetUrls?: string[];
+  subsetSize?: number;
   sitemapId?: string;
   error?: string;
 }
 
-export default function SitemapSubsetGenerator() {
-  const [result, setResult] = useState<Result | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [inputMethod, setInputMethod] = useState("url");
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" disabled={pending}>
+      {pending ? "Processing..." : "Generate Subset"}
+    </Button>
+  );
+}
 
-  async function onSubmit(formData: FormData) {
-    setIsLoading(true);
-    const result = await processSitemap(formData);
-    setResult(result);
-    setIsLoading(false);
+export default function SitemapSubsetGenerator() {
+  const [inputMethod, setInputMethod] = useState("url");
+  const [state, formAction] = useFormState(processSitemap, null);
+  const router = useRouter();
+
+  if (state?.success) {
+    router.push(`/sitemap/${state.sitemapId}`);
   }
 
   return (
@@ -49,7 +58,7 @@ export default function SitemapSubsetGenerator() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={onSubmit} className="space-y-4">
+          <form action={formAction} className="space-y-4">
             <RadioGroup
               defaultValue="url"
               onValueChange={(value) => setInputMethod(value)}
@@ -100,46 +109,12 @@ export default function SitemapSubsetGenerator() {
                 required
               />
             </div>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Processing..." : "Generate Subset"}
-            </Button>
+            <SubmitButton />
           </form>
         </CardContent>
-        {result && (
+        {state && !state.success && (
           <CardFooter>
-            <div className="w-full space-y-4">
-              {result.success ? (
-                <>
-                  <div className="space-y-2">
-                    <p>Total URLs in original sitemap: {result.totalUrls}</p>
-                    <p>Subset size: {result.subsetSize}</p>
-                  </div>
-                  <div className="max-h-60 overflow-y-auto">
-                    <h3 className="font-semibold mb-2">Subset URLs:</h3>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {result.subsetUrls &&
-                        result.subsetUrls.map((url: string, index: number) => (
-                          <li key={index} className="text-sm">
-                            {url}
-                          </li>
-                        ))}
-                    </ul>
-                  </div>
-                  <Button>
-                    <Link
-                      href={`/sitemap/${result.sitemapId}`}
-                      passHref
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Validate Your Sitemap Subset
-                    </Link>
-                  </Button>
-                </>
-              ) : (
-                <p className="text-red-500">{result.error}</p>
-              )}
-            </div>
+            <p className="text-red-500">{state.error}</p>
           </CardFooter>
         )}
       </Card>
