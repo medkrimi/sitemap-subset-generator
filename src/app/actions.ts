@@ -4,7 +4,7 @@ import { XMLParser, XMLBuilder } from 'fast-xml-parser'
 import fs from 'fs/promises'
 import path from 'path'
 
-const SITEMAP_DIR = '/tmp/generated_sitemaps';
+const SITEMAP_DIR = path.join(process.cwd(), 'public', 'generated_sitemaps')
 
 export async function processSitemap(formData: FormData) {
   const sitemapUrl = formData.get('sitemapUrl') as string
@@ -33,31 +33,33 @@ export async function processSitemap(formData: FormData) {
       throw new Error('Invalid sitemap format')
     }
 
-    const urls = result.urlset.url.map((url: unknown) => {
-      if (typeof url === 'string') {
-        return url
-      } else if (typeof url === 'object' && url !== null && 'loc' in url) {
-        return (url as { loc: string }).loc
-      } else {
-        throw new Error('Invalid URL format')
-      }
-    })
+    const urls = result.urlset.url.map((url: any) => typeof url === 'string' ? url : url.loc)
 
     // Group URLs by their structure
     const groupedUrls: { [key: string]: string[] } = {}
     urls.forEach((url: string) => {
-      const structure = url.split('/').slice(0, -1).join('/')
-      if (!groupedUrls[structure]) {
-        groupedUrls[structure] = []
+      const urlObj = new URL(url)
+      const pathParts = urlObj.pathname.split('/').filter(Boolean)
+      if (pathParts.length > 0) {
+        const groupKey = '/' + pathParts[0]
+        if (!groupedUrls[groupKey]) {
+          groupedUrls[groupKey] = []
+        }
+        groupedUrls[groupKey].push(url)
+      } else {
+        // Handle root URLs
+        if (!groupedUrls['/']) {
+          groupedUrls['/'] = []
+        }
+        groupedUrls['/'].push(url)
       }
-      groupedUrls[structure].push(url)
     })
 
     // Get subset for each group
     const subsetUrls: string[] = []
-    Object.values(groupedUrls).forEach(group => {
-      const subset = group.slice(0, subsetSize)
-      subsetUrls.push(...subset)
+    Object.entries(groupedUrls).forEach(([group, groupUrls]) => {
+      const groupSubset = groupUrls.slice(0, subsetSize)
+      subsetUrls.push(...groupSubset)
     })
 
     // Generate new sitemap XML

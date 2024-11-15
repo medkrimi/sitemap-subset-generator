@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs/promises'
 import path from 'path'
 
-const SITEMAP_DIR = '/tmp/generated_sitemaps'
+const SITEMAP_DIR = path.join(process.cwd(), 'public', 'generated_sitemaps')
 
 export async function GET(
-    request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  request: NextRequest,
+  { params }: { params: { id: string } }
 ) {
-  const filePath = path.join(SITEMAP_DIR, `${(await params).id}.xml`)
+  const filePath = path.join(SITEMAP_DIR, `${params.id}.xml`)
 
   try {
     const sitemap = await fs.readFile(filePath, 'utf-8')
